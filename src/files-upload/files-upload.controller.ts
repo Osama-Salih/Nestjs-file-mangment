@@ -46,13 +46,33 @@ export class FilesUploadController {
     return file;
   }
 
-  @UseInterceptors(
-    FilesInterceptor('files', 3, {
-      limits: { fileSize: 2 * 1024 * 1024 }, // 2 MB  (1 * 1024 one byte)
-    }),
-  )
   @Post('multiple')
-  uploadMultipleFiles(@UploadedFiles() files: File[]) {
+  @UseInterceptors(FilesInterceptor('files'))
+  uploadMultipleFiles(
+    @UploadedFiles(
+      new ParseFilePipe({
+        validators: [
+          // 1) validate file type (extension)
+          new FileTypeValidator({
+            fileType: /png|jpg|pdf/,
+          }),
+
+          // 2) validate file size
+          new MaxFileSizeValidator({
+            maxSize: 2 * 1024 * 1024, // 2 MB
+            message: (maxSize) =>
+              `File is too big. Max file size is ${maxSize} bytes`,
+          }),
+        ],
+        errorHttpStatusCode: HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+        exceptionFactory: (error: string) => {
+          console.log('error', error);
+          throw new UnprocessableEntityException(error);
+        },
+      }),
+    )
+    files: File[],
+  ) {
     return files.map((file) => file.originalname);
   }
 }
