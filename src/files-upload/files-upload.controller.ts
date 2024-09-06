@@ -67,6 +67,9 @@ export class FilesUploadController {
             message: (maxSize) =>
               `File is too big. Max file size is ${maxSize} bytes`,
           }),
+
+          // 3) Custom validator (validate files signature)
+          new FileSignatureValidator(),
         ],
         errorHttpStatusCode: HttpStatus.UNSUPPORTED_MEDIA_TYPE,
         exceptionFactory: (error: string) => {
